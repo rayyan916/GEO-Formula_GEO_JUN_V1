@@ -47,7 +47,7 @@ const Racing3D=(()=>{
   for(let i=0;i<=count;i++){let f=(i%count)/count*cp.length,k=Math.floor(f),n=cp.length;raw.push(cat(cp[(k+n-1)%n],cp[k%n],cp[(k+1)%n],cp[(k+2)%n],f-k));}let length=0;for(let i=0;i<raw.length;i++){if(i)length+=Math.hypot(raw[i][0]-raw[i-1][0],raw[i][2]-raw[i-1][2]);raw[i][1]=0;raw[i].dist=length;}const step=length/count;
   const track={...definition,index,raw,length,step};track.sample=function(dist){dist=((dist%length)+length)%length;let lo=0,hi=raw.length-1;while(hi-lo>1){let mid=(lo+hi)>>1;if(raw[mid].dist<dist)lo=mid;else hi=mid;}const a=raw[lo],b=raw[hi],t=(dist-a.dist)/(b.dist-a.dist||1),p=a.map((v,j)=>v+(b[j]-v)*t),tangent=V.norm(V.sub(b,a));const behind=raw[(lo-2+count)%count],ahead=raw[(lo+2)%count];let v1=V.norm(V.sub(a,behind)),v2=V.norm(V.sub(ahead,b));const curvature=(v1[0]*v2[2]-v1[2]*v2[0])/(step*3);return {p,t:tangent,right:[-tangent[2],0,tangent[0]],heading:Math.atan2(-tangent[0],-tangent[2]),curvature};};return track;
  }
- const palettes=[['#f3f5fc','#2450a4','#f3d345'],['#e64046','#272a38','#ffbf71'],['#f2f2f8','#2466b4','#ffcf4b'],['#e9e4f4','#a64291','#f6a8d2'],['#5d7d70','#182e3d','#a6e2a8'],['#f3cf42','#252e3b','#b7efff'],['#3466b6','#eeead6','#f1b632'],['#344354','#ec8034','#ffd6a0'],['#f4f4f5','#173e7b','#ffd353'],['#f6f1f7','#30224e','#ed6c99']];
+ const palettes=[['#f3f5fc','#2450a4','#f3d345'],['#e64046','#272a38','#ffbf71'],['#f2f2f8','#2466b4','#ffcf4b'],['#e9e4f4','#a64291','#f6a8d2'],['#5d7d70','#182e3d','#a6e2a8'],['#f3cf42','#252e3b','#b7efff'],['#3466b6','#eeead6','#f1b632'],['#344354','#ec8034','#ffd6a0'],['#f4f4f5','#173e7b','#ffd353'],['#f6f1f7','#30224e','#ed6c99'],['#e2e9ee','#9baebb','#efae24'],['#e3ddeb','#531396','#d42f8f']];
  const SHAPES=[
  {label:'長鼻六輪・雙層尾翼',layout:'六輪開放式',width:3.0,length:5.75},
  {label:'四輪包覆・寬體GT艙',layout:'四輪封閉式',width:3.05,length:4.90},
@@ -58,7 +58,9 @@ const Racing3D=(()=>{
  {label:'蝶翼車身・雙層鷗翼',layout:'四輪短軸式',width:3.38,length:5.15},
  {label:'楔形GT・高位進氣口',layout:'四輪裝甲式',width:3.0,length:4.95},
  {label:'雙圓渦輪・上掠長尾翼',layout:'六輪雙渦流式',width:4.2,length:6.05},
- {label:'紫白流線・四噴口寬尾艙',layout:'六輪流線式',width:3.5,length:6.24}
+ {label:'紫白流線・四噴口寬尾艙',layout:'六輪流線式',width:3.5,length:6.24},
+ {label:'銀白長鼻・金輪・紅色雙引擎',layout:'神秘六輪雙噴射',width:3.7,length:6.40},
+ {label:'紫銀分叉車頭・四噴口・翼形輪罩',layout:'神秘六輪四噴射',width:3.8,length:6.50}
  ];
  function carParts(i){const [body,accent,trim]=palettes[i],g=new Geometry(),shadow=new Geometry(),wheels=[],spec=SHAPES[i];
   // Lofted hulls use genuine cross-sections: each model has a separate silhouette.
@@ -69,7 +71,7 @@ const Racing3D=(()=>{
   }
   function plate(points,y,color=body,thickness=.055){g.quad(...points.map(([x,z])=>[x,y,z]),color);g.quad(...points.map(([x,z])=>[x,y-thickness,z]).reverse(),accent);for(let n=0;n<4;n++){let a=points[n],b=points[(n+1)%4];g.quad([a[0],y,a[1]],[a[0],y-thickness,a[1]],[b[0],y-thickness,b[1]],[b[0],y,b[1]],accent);}}
   function fin(x,z,h=.48,l=.7,color=accent,y=.22){g.tri([x,y,z-l/2],[x,y+h,z+l/2],[x,y,z+l/2],color);g.tri([x+.045,y,z-l/2],[x+.045,y,z+l/2],[x+.045,y+h,z+l/2],color);g.quad([x,y+h,z+l/2],[x+.045,y+h,z+l/2],[x+.045,y,z+l/2],[x,y,z+l/2],trim);}
-  function canopy(z=-.3,l=1.4,w=.55,h=.44,y=.43){const nr=6,ns=16;for(let a=0;a<nr;a++)for(let n=0;n<ns;n++){const make=(r,k)=>{const phi=r/nr*Math.PI/2,theta=k/ns*TAU;return [Math.cos(theta)*Math.cos(phi)*w/2,y+Math.sin(phi)*h,z+Math.sin(theta)*Math.cos(phi)*l/2];};g.quad(make(a,n),make(a,n+1),make(a+1,n+1),make(a+1,n),n<8?'#28a7c1':'#11607f');}g.box(0,y+h+.006,z-.10,.035,.023,l*.70,'#bcecf1');}
+  function canopy(z=-.3,l=1.4,w=.55,h=.44,y=.43,dark='#11607f',light='#28a7c1'){const nr=6,ns=16;for(let a=0;a<nr;a++)for(let n=0;n<ns;n++){const make=(r,k)=>{const phi=r/nr*Math.PI/2,theta=k/ns*TAU;return [Math.cos(theta)*Math.cos(phi)*w/2,y+Math.sin(phi)*h,z+Math.sin(theta)*Math.cos(phi)*l/2];};g.quad(make(a,n),make(a,n+1),make(a+1,n+1),make(a+1,n),n<8?light:dark);}g.box(0,y+h+.006,z-.10,.035,.023,l*.70,'#bcecf1');}
   function wing(z=1.7,span=2.75,y=.9,sweep=.20,col=body,split=false){
    if(split){for(const s of [-1,1]){const cx=s*span*.28,hw=span*.25;plate([[cx-hw,z-.24],[cx+hw,z-.24+sweep],[cx+hw,z+.22+sweep],[cx-hw,z+.22]],y,col);g.box(cx,y-.28,z,.065,.56,.12,accent);fin(cx+s*hw,z+.02,.25,.65,trim,y-.05);}}
    else{plate([[-span/2,z-.25+sweep],[span/2,z-.25+sweep],[span/2,z+.25],[-span/2,z+.25]],y,col);for(const s of [-1,1]){g.box(s*span*.27,y/2,z,.06,y,.13,accent);fin(s*span/2,z,.25,.66,accent,y-.08);}}
@@ -154,12 +156,77 @@ const Racing3D=(()=>{
    }
   }
 
+
+  // Secret machines: independent photo-guided chassis, not palette swaps.
+  if(i===10){
+   hull([[-3.28,.018,.12,.19],[-2.54,.23,.15,.36],[-1.06,.34,.19,.52],[.32,.40,.20,.59],[1.28,.29,.20,.45],[2.2,.16,.16,.33]],body,body);
+   canopy(-.66,2.28,.64,.43,.46,'#075078','#078ab1');
+   pair(-1.90,1.10,true,.29,'#dda937');pair(-1.15,1.10,true,.29,'#dda937');pair(1.58,1.24,false,.46,'#dda937');
+   // Two detached crescent front wings and exposed twin steering axles.
+   for(const side of [-1,1]){
+    plate([[side*.25,-2.80],[side*1.78,-2.72],[side*1.52,-2.05],[side*.50,-2.18]],.22,body);
+    hull([[-3.05,.018,.13,.21,side*1.72],[-2.50,.19,.18,.48,side*1.54],[-1.91,.09,.20,.54,side*1.37]],body,body);
+    plate([[side*1.35,-2.47],[side*1.62,-2.57],[side*1.54,-2.25],[side*1.38,-2.12]],.49,'#e9a023');
+    hull([[-2.43,.035,.34,.37,side*.29],[-1.82,.065,.35,.49,side*.31],[-1.35,.05,.42,.55,side*.32]],'#edb32b','#d09218');
+    // Silver intake pods sit beside the blue canopy, ahead of the rear arms.
+    hull([[-.75,.23,.23,.63,side*.79],[-.20,.25,.24,.65,side*.79],[.38,.15,.23,.48,side*.79]],accent,accent);
+    g.box(side*.79,.45,-.77,.32,.27,.035,'#092331');
+    for(let n=0;n<4;n++)g.box(side*.79,.35+n*.058,-.795,.29,.017,.025,'#657786');
+    plate([[side*.31,.12],[side*1.20,.66],[side*1.47,1.30],[side*.42,.95]],.57,body);
+    plate([[side*.39,.30],[side*1.13,.82],[side*1.18,1.02],[side*.47,.53]],.589,'#a6b1c7');
+    hull([[.55,.11,.50,.74,side*.48],[.90,.12,.47,.67,side*.48]],'#00a3d3','#0375a0');
+    hull([[.42,.16,.28,.47,side*1.24],[1.08,.36,.27,.85,side*1.24],[1.94,.36,.28,.90,side*1.24],[2.25,.25,.32,.69,side*1.24]],body,body);
+    // Red nacelles with silver annular nozzles are visible from the chase camera.
+    ringZ(side*1.24,.91,1.86,.32,.81,'#be2347','#111923','#cecedb');
+    ringZ(side*1.24,.91,2.35,.21,.32,'#9aa3ae','#17212b','#e0e3eb');
+    hull([[.85,.15,.67,1.04,side*1.24],[1.40,.20,.70,1.12,side*1.24],[1.64,.13,.68,1.01,side*1.24]],accent,accent);
+    vent(side*1.24,1.16,.075,.40,1.13);
+    g.box(side*1.24,1.21,1.74,.075,.52,.16,accent);
+    plate([[side*.63,1.48],[side*1.86,1.89],[side*1.88,2.20],[side*.65,1.85]],1.48,body);
+    g.box(side*.36,.37,2.06,.20,.07,.05,'#df3a4a');
+   }
+   fin(0,.61,.35,.65,body,.53);
+  }else if(i===11){
+   hull([[-3.30,.018,.13,.24],[-2.20,.24,.18,.45],[-.90,.41,.20,.62],[.40,.40,.20,.63],[1.90,.31,.20,.45],[2.30,.25,.19,.37]],body,body);
+   canopy(-.69,2.35,.65,.44,.53,'#101847','#164b9d');
+   pair(-1.90,1.18,true,.31,'#5b5569');pair(-1.10,1.18,true,.31,'#5b5569');pair(1.58,1.32,false,.46,'#5b5569');
+   // Split spear nose, silver leading edges and magenta piping.
+   for(const side of [-1,1]){
+    hull([[-3.34,.012,.12,.20,side*.18],[-2.67,.09,.15,.31,side*.22],[-1.85,.11,.20,.41,side*.27]],accent,accent);
+    plate([[side*.06,-2.81],[side*.34,-2.38],[side*.47,-1.89],[side*.15,-2.04]],.43,trim);
+    g.box(side*.25,.43,-2.51,.15,.09,.035,'#b6e738');
+    plate([[side*.36,-2.37],[side*1.72,-2.63],[side*1.54,-2.13],[side*.37,-1.96]],.23,accent);
+    // Long purple front wheel shrouds; high silver canards finish their tops.
+    hull([[-3.14,.012,.15,.22,side*1.71],[-2.51,.26,.21,.56,side*1.42],[-1.80,.37,.34,.78,side*1.18],[-.82,.30,.29,.64,side*1.17],[-.38,.08,.22,.42,side*1.12]],accent,accent);
+    hull([[-3.15,.01,.16,.23,side*1.70],[-2.74,.12,.22,.36,side*1.54],[-2.43,.15,.25,.45,side*1.45]],body,body);
+    vent(side*1.45,-2.30,.13,.45,.54);
+    plate([[side*.78,-1.19],[side*1.56,-1.65],[side*1.65,-1.48],[side*.93,-.94]],.82,body);
+    // Blade-shaped side skirts join a broad rear engine deck.
+    hull([[-.77,.035,.18,.25,side*.67],[.25,.27,.19,.57,side*.81],[1.72,.34,.22,.65,side*1.25],[2.27,.23,.23,.44,side*1.30]],accent,accent);
+    for(let n=0;n<2;n++)plate([[side*.49,-.48+n*.48],[side*1.13,-.24+n*.53],[side*1.07,.04+n*.53],[side*.54,-.13+n*.48]],.39,accent);
+    plate([[side*.31,.02],[side*1.50,.87],[side*1.72,1.87],[side*.39,1.13]],.73,body);
+    plate([[side*.35,.14],[side*1.48,.96],[side*1.63,1.86],[side*.45,1.15]],.749,trim);
+    // Four long purple intake housings end in four pink-rimmed gold nozzles.
+    for(const x of [.43,1.34]){
+     const y=x<1?.67:.73,z=x<1?2.48:2.31,r=x<1?.25:.29;
+     hull([[.48,.13,.60,.79,side*x],[1.08,r,.49,.98,side*x],[1.78,r,.42,.91,side*x],[z-.10,r*.90,.40,.84,side*x]],accent,accent);
+     g.box(side*x,.74,.45,r*1.25,.17,.035,'#101526');
+     ringZ(side*x,y,z,r,.27,trim,'#e6b62c','#bd3a92');
+    }
+    // Tall outer rear shoulders carry inward-swept independent wings.
+    hull([[1.14,.10,.55,.93,side*1.61],[1.80,.17,.43,1.20,side*1.60],[2.20,.12,.43,1.11,side*1.59]],accent,accent);
+    plate([[side*.58,1.65],[side*1.75,1.48],[side*1.80,1.81],[side*.61,1.96]],1.30,body);
+    g.box(side*1.59,1.09,1.77,.07,.34,.17,body);
+    g.box(side*1.41,.35,2.36,.18,.07,.04,'#e24b6b');
+   }
+  }
+
   for(const s of [-1,1]){g.box(s*.35,.32,2.00,.18,.08,.04,'#ff6f5d');}
   for(let n=0;n<36;n++){let a=n/36*TAU,b=(n+1)/36*TAU;shadow.tri([0,.025,0],[Math.sin(a)*(spec.width/2+.06),.025,Math.cos(a)*(spec.length/2+.05)],[Math.sin(b)*(spec.width/2+.06),.025,Math.cos(b)*(spec.length/2+.05)],'#101923');}shadow.layer=-1;
-  const wheelGeo=new Geometry().cylinderX(.34,.32,'#14202a');return {body:g,wheel:wheelGeo,shadow,wheels,spread:spec.width/2,length:spec.length,spec,exhaust:i===8?[[-1.14,.91,2.29],[1.14,.91,2.29]]:i===9?[[-.44,.59,2.44],[.44,.59,2.44],[-1.4,.54,2.29],[1.4,.54,2.29]]:[[-.35,.32,2.03],[.35,.32,2.03]]};
+  const wheelGeo=new Geometry().cylinderX(.34,.32,'#14202a');return {body:g,wheel:wheelGeo,shadow,wheels,spread:spec.width/2,length:spec.length,spec,exhaust:i===10?[[-1.24,.91,2.53],[1.24,.91,2.53]]:i===11?[[-.43,.67,2.63],[.43,.67,2.63],[-1.34,.73,2.46],[1.34,.73,2.46]]:i===8?[[-1.14,.91,2.29],[1.14,.91,2.29]]:i===9?[[-.44,.59,2.44],[.44,.59,2.44],[-1.4,.54,2.29],[1.4,.54,2.29]]:[[-.35,.32,2.03],[.35,.32,2.03]]};
  }
 
- const cars=Array.from({length:10},(_,i)=>carParts(i));let track=makeTrack(0),scene=null,renderer=null,preview=null,previewCanvas=null,cam=null;
+ const cars=Array.from({length:12},(_,i)=>carParts(i));let track=makeTrack(0),scene=null,renderer=null,preview=null,previewCanvas=null,cam=null;
  function offset(s,d,y=.03){return [s.p[0]+s.right[0]*d,y,s.p[2]+s.right[2]*d];}
  function scenery(t){const road=new Geometry(),ground=new Geometry(),structures=new Geometry(),sea=new Geometry(),props=new Geometry();
   if(t.index===1){sea.quad([-5000,-.35,-5000],[-5000,-.35,5000],[5000,-.35,5000],[5000,-.35,-5000],'#2386a3');ground.quad([-3000,-.12,-3000],[-3000,-.12,3000],[100,-.12,3000],[145,-.12,-3000],'#628b63');for(let n=0;n<160;n++){let x=180+(n%10)*48,z=-1600+Math.floor(n/10)*200;structures.box(x,-.28,z,24,.018,1.7,n%3?'#5ab5c5':'#a9e3e7');}}

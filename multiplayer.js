@@ -1,7 +1,7 @@
 'use strict';
 // Room protocol: host admission, shared clock and player state over secure WebSockets.
 window.GeoNet=(()=>{
- const VERSION='geo-junior-1',PREFIX='geojr1-',LIMIT=4;
+ const VERSION='geo-junior-2-secret',PREFIX='geojr1-',LIMIT=4;
  let peer=null,host=false,code='',self='',members=[],links=new Map(),started=false,starting=false,ready=false,offset=0,epoch=0,lastSend=0,lastRoster=0,clockTimer=null,connectTimer=null,finishShown=false,closing=false,hostLast=0;
  const now=()=>Date.now()+offset;
  const status=s=>{$('netStatus').textContent=s;};
@@ -19,7 +19,7 @@ window.GeoNet=(()=>{
   $('readyRoom').onclick=()=>{ready=!ready;if(host){me().ready=ready;syncRoom();}else safeSend(links.get('host'),{type:'ready',ready});};
   if(host)$('launchRoom').onclick=()=>{if(members.length>=2&&members.every(m=>m.ready)){starting=true;const packet={type:'start',v:VERSION,epoch:now()+4500,track:selectedTrack,members:members.map(m=>({...m})),code};broadcast(packet);begin(packet);}};
  }
- function validPlayer(p){return p&&p.v===VERSION&&typeof p.name==='string'&&p.name.trim()&&Number.isInteger(p.car)&&p.car>=0&&p.car<CARS.length;}
+ function validPlayer(p){return p&&p.v===VERSION&&typeof p.name==='string'&&p.name.trim()&&Number.isInteger(p.car)&&p.car>=0&&p.car<CARS.length&&carAllowed(p.car,p.name.trim().slice(0,18));}
  function hostConnection(c){let admitted=false;const deadline=setTimeout(()=>{if(!admitted)c.close();},10000);
   c.on('data',p=>{
    if(!p||typeof p!=='object')return;
@@ -35,7 +35,7 @@ window.GeoNet=(()=>{
   c.on('close',()=>{clearTimeout(deadline);if(!admitted||closing)return;links.delete(c.peer);const m=members.find(m=>m.id===c.peer);if(started){if(m){m.disconnected=true;m.speed=0;}broadcast({type:'states',members,time:now()});message('有車手離線，其他車手繼續比賽',4);}else{members=members.filter(m=>m.id!==c.peer);syncRoom();}});
   c.on('error',()=>c.close());
  }
- function startPeer(isHost,joinCode){reset();host=isHost;code=joinCode;status('正在連接比賽訊號服務…');
+ function startPeer(isHost,joinCode){ensureCarSelection();reset();host=isHost;code=joinCode;status('正在連接比賽訊號服務…');
   if(typeof RoomPeer==='undefined'){fail('未能載入連線元件。請重新整理，或使用下載套件中的完整檔案。');return;}
   const options={...window.GEO_NET_CONFIG};peer=isHost?new RoomPeer(PREFIX+code,options):new RoomPeer(undefined,options);
   connectTimer=setTimeout(()=>fail('連線逾時。請檢查網絡是否允許多人連線服務，並確認房主仍在等候室。'),20000);
