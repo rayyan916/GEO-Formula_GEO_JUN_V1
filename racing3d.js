@@ -43,11 +43,15 @@ const Racing3D=(()=>{
   disposeGeometry(geo){const b=this.buffers.get(geo);if(b){this.gl.deleteBuffer(b.buffer);this.buffers.delete(geo);}}
  }
  const TRACKS=[{id:'volcano',name:'熔脈火山環線',tag:'VOLCANIC RIDGE',description:'高速長彎 · 火山峽谷 · 複合彎道',difficulty:'★★☆',points:[[0,0],[0,260],[140,420],[350,390],[500,260],[530,40],[380,-100],[430,-300],[200,-460],[-40,-380],[-160,-180],[-90,-40]]},{id:'coast',name:'潮汐海岸挑戰',tag:'TIDAL COAST',description:'S彎 · 髮夾彎 · 巨浪濕滑路段',difficulty:'★★★',points:[[0,0],[0,220],[150,360],[360,330],[520,180],[420,20],[600,-140],[470,-350],[240,-380],[150,-220],[-30,-300],[-180,-140],[-80,-40]]}];
+ TRACKS.push(
+ {id:'city',name:'城市',tag:'METRO CIRCUIT',description:'高樓街道 · 連續彎 · 長直路',difficulty:'★★★',points:[[0,0],[0,260],[90,350],[320,350],[410,260],[410,100],[590,100],[590,-150],[400,-270],[240,-270],[240,-100],[80,-100],[-70,-210],[-210,-100],[-210,50],[-90,100]]},
+ {id:'rainforest',name:'熱帶雨林',tag:'RAINFOREST RUN',description:'熱帶密林 · 河流景觀 · 曲折路線',difficulty:'★★★',points:[[0,0],[40,240],[210,360],[440,300],[520,130],[430,-10],[600,-150],[500,-360],[280,-430],[70,-330],[-100,-380],[-230,-200],[-170,-20],[-90,100]]}
+ );
  function makeTrack(index){const definition=TRACKS[index],cp=definition.points.map(p=>[p[0],0,-p[1]]),raw=[],count=cp.length*48;function cat(a,b,c,d,t){let t2=t*t,t3=t2*t;return b.map((_,j)=>.5*((2*b[j])+(-a[j]+c[j])*t+(2*a[j]-5*b[j]+4*c[j]-d[j])*t2+(-a[j]+3*b[j]-3*c[j]+d[j])*t3));}
   for(let i=0;i<=count;i++){let f=(i%count)/count*cp.length,k=Math.floor(f),n=cp.length;raw.push(cat(cp[(k+n-1)%n],cp[k%n],cp[(k+1)%n],cp[(k+2)%n],f-k));}let length=0;for(let i=0;i<raw.length;i++){if(i)length+=Math.hypot(raw[i][0]-raw[i-1][0],raw[i][2]-raw[i-1][2]);raw[i][1]=0;raw[i].dist=length;}const step=length/count;
   const track={...definition,index,raw,length,step};track.sample=function(dist){dist=((dist%length)+length)%length;let lo=0,hi=raw.length-1;while(hi-lo>1){let mid=(lo+hi)>>1;if(raw[mid].dist<dist)lo=mid;else hi=mid;}const a=raw[lo],b=raw[hi],t=(dist-a.dist)/(b.dist-a.dist||1),p=a.map((v,j)=>v+(b[j]-v)*t),tangent=V.norm(V.sub(b,a));const behind=raw[(lo-2+count)%count],ahead=raw[(lo+2)%count];let v1=V.norm(V.sub(a,behind)),v2=V.norm(V.sub(ahead,b));const curvature=(v1[0]*v2[2]-v1[2]*v2[0])/(step*3);return {p,t:tangent,right:[-tangent[2],0,tangent[0]],heading:Math.atan2(-tangent[0],-tangent[2]),curvature};};return track;
  }
- const palettes=[['#f3f5fc','#2450a4','#f3d345'],['#e64046','#272a38','#ffbf71'],['#f2f2f8','#2466b4','#ffcf4b'],['#e9e4f4','#a64291','#f6a8d2'],['#5d7d70','#182e3d','#a6e2a8'],['#f3cf42','#252e3b','#b7efff'],['#3466b6','#eeead6','#f1b632'],['#344354','#ec8034','#ffd6a0'],['#f4f4f5','#173e7b','#ffd353'],['#f6f1f7','#30224e','#ed6c99']];
+ const palettes=[['#f3f5fc','#2450a4','#f3d345'],['#e64046','#272a38','#ffbf71'],['#f2f2f8','#2466b4','#ffcf4b'],['#e9e4f4','#a64291','#f6a8d2'],['#5d7d70','#182e3d','#a6e2a8'],['#f3cf42','#252e3b','#b7efff'],['#3466b6','#eeead6','#f1b632'],['#344354','#ec8034','#ffd6a0'],['#f4f4f5','#173e7b','#ffd353'],['#f6f1f7','#30224e','#ed6c99'],['#e2e9ee','#9baebb','#efae24'],['#e3ddeb','#531396','#d42f8f']];
  const SHAPES=[
  {label:'長鼻六輪・雙層尾翼',layout:'六輪開放式',width:3.0,length:5.75},
  {label:'四輪包覆・寬體GT艙',layout:'四輪封閉式',width:3.05,length:4.90},
@@ -58,7 +62,9 @@ const Racing3D=(()=>{
  {label:'蝶翼車身・雙層鷗翼',layout:'四輪短軸式',width:3.38,length:5.15},
  {label:'楔形GT・高位進氣口',layout:'四輪裝甲式',width:3.0,length:4.95},
  {label:'雙圓渦輪・上掠長尾翼',layout:'六輪雙渦流式',width:4.2,length:6.05},
- {label:'紫白流線・四噴口寬尾艙',layout:'六輪流線式',width:3.5,length:6.24}
+ {label:'紫白流線・四噴口寬尾艙',layout:'六輪流線式',width:3.5,length:6.24},
+ {label:'銀白長鼻・金輪・紅色雙引擎',layout:'神秘六輪雙噴射',width:3.7,length:6.40},
+ {label:'紫銀分叉車頭・四噴口・翼形輪罩',layout:'神秘六輪四噴射',width:3.8,length:6.50}
  ];
  function carParts(i){const [body,accent,trim]=palettes[i],g=new Geometry(),shadow=new Geometry(),wheels=[],spec=SHAPES[i];
   // Lofted hulls use genuine cross-sections: each model has a separate silhouette.
@@ -69,7 +75,7 @@ const Racing3D=(()=>{
   }
   function plate(points,y,color=body,thickness=.055){g.quad(...points.map(([x,z])=>[x,y,z]),color);g.quad(...points.map(([x,z])=>[x,y-thickness,z]).reverse(),accent);for(let n=0;n<4;n++){let a=points[n],b=points[(n+1)%4];g.quad([a[0],y,a[1]],[a[0],y-thickness,a[1]],[b[0],y-thickness,b[1]],[b[0],y,b[1]],accent);}}
   function fin(x,z,h=.48,l=.7,color=accent,y=.22){g.tri([x,y,z-l/2],[x,y+h,z+l/2],[x,y,z+l/2],color);g.tri([x+.045,y,z-l/2],[x+.045,y,z+l/2],[x+.045,y+h,z+l/2],color);g.quad([x,y+h,z+l/2],[x+.045,y+h,z+l/2],[x+.045,y,z+l/2],[x,y,z+l/2],trim);}
-  function canopy(z=-.3,l=1.4,w=.55,h=.44,y=.43){const nr=6,ns=16;for(let a=0;a<nr;a++)for(let n=0;n<ns;n++){const make=(r,k)=>{const phi=r/nr*Math.PI/2,theta=k/ns*TAU;return [Math.cos(theta)*Math.cos(phi)*w/2,y+Math.sin(phi)*h,z+Math.sin(theta)*Math.cos(phi)*l/2];};g.quad(make(a,n),make(a,n+1),make(a+1,n+1),make(a+1,n),n<8?'#28a7c1':'#11607f');}g.box(0,y+h+.006,z-.10,.035,.023,l*.70,'#bcecf1');}
+  function canopy(z=-.3,l=1.4,w=.55,h=.44,y=.43,dark='#11607f',light='#28a7c1'){const nr=6,ns=16;for(let a=0;a<nr;a++)for(let n=0;n<ns;n++){const make=(r,k)=>{const phi=r/nr*Math.PI/2,theta=k/ns*TAU;return [Math.cos(theta)*Math.cos(phi)*w/2,y+Math.sin(phi)*h,z+Math.sin(theta)*Math.cos(phi)*l/2];};g.quad(make(a,n),make(a,n+1),make(a+1,n+1),make(a+1,n),n<8?light:dark);}g.box(0,y+h+.006,z-.10,.035,.023,l*.70,'#bcecf1');}
   function wing(z=1.7,span=2.75,y=.9,sweep=.20,col=body,split=false){
    if(split){for(const s of [-1,1]){const cx=s*span*.28,hw=span*.25;plate([[cx-hw,z-.24],[cx+hw,z-.24+sweep],[cx+hw,z+.22+sweep],[cx-hw,z+.22]],y,col);g.box(cx,y-.28,z,.065,.56,.12,accent);fin(cx+s*hw,z+.02,.25,.65,trim,y-.05);}}
    else{plate([[-span/2,z-.25+sweep],[span/2,z-.25+sweep],[span/2,z+.25],[-span/2,z+.25]],y,col);for(const s of [-1,1]){g.box(s*span*.27,y/2,z,.06,y,.13,accent);fin(s*span/2,z,.25,.66,accent,y-.08);}}
@@ -154,16 +160,118 @@ const Racing3D=(()=>{
    }
   }
 
+
+  // Secret machines: independent photo-guided chassis, not palette swaps.
+  if(i===10){
+   hull([[-3.28,.018,.12,.19],[-2.54,.23,.15,.36],[-1.06,.34,.19,.52],[.32,.40,.20,.59],[1.28,.29,.20,.45],[2.2,.16,.16,.33]],body,body);
+   canopy(-.66,2.28,.64,.43,.46,'#075078','#078ab1');
+   pair(-1.90,1.10,true,.29,'#dda937');pair(-1.15,1.10,true,.29,'#dda937');pair(1.58,1.24,false,.46,'#dda937');
+   // Two detached crescent front wings and exposed twin steering axles.
+   for(const side of [-1,1]){
+    plate([[side*.25,-2.80],[side*1.78,-2.72],[side*1.52,-2.05],[side*.50,-2.18]],.22,body);
+    hull([[-3.05,.018,.13,.21,side*1.72],[-2.50,.19,.18,.48,side*1.54],[-1.91,.09,.20,.54,side*1.37]],body,body);
+    plate([[side*1.35,-2.47],[side*1.62,-2.57],[side*1.54,-2.25],[side*1.38,-2.12]],.49,'#e9a023');
+    hull([[-2.43,.035,.34,.37,side*.29],[-1.82,.065,.35,.49,side*.31],[-1.35,.05,.42,.55,side*.32]],'#edb32b','#d09218');
+    // Silver intake pods sit beside the blue canopy, ahead of the rear arms.
+    hull([[-.75,.23,.23,.63,side*.79],[-.20,.25,.24,.65,side*.79],[.38,.15,.23,.48,side*.79]],accent,accent);
+    g.box(side*.79,.45,-.77,.32,.27,.035,'#092331');
+    for(let n=0;n<4;n++)g.box(side*.79,.35+n*.058,-.795,.29,.017,.025,'#657786');
+    plate([[side*.31,.12],[side*1.20,.66],[side*1.47,1.30],[side*.42,.95]],.57,body);
+    plate([[side*.39,.30],[side*1.13,.82],[side*1.18,1.02],[side*.47,.53]],.589,'#a6b1c7');
+    hull([[.55,.11,.50,.74,side*.48],[.90,.12,.47,.67,side*.48]],'#00a3d3','#0375a0');
+    hull([[.42,.16,.28,.47,side*1.24],[1.08,.36,.27,.85,side*1.24],[1.94,.36,.28,.90,side*1.24],[2.25,.25,.32,.69,side*1.24]],body,body);
+    // Red nacelles with silver annular nozzles are visible from the chase camera.
+    ringZ(side*1.24,.91,1.86,.32,.81,'#be2347','#111923','#cecedb');
+    ringZ(side*1.24,.91,2.35,.21,.32,'#9aa3ae','#17212b','#e0e3eb');
+    hull([[.85,.15,.67,1.04,side*1.24],[1.40,.20,.70,1.12,side*1.24],[1.64,.13,.68,1.01,side*1.24]],accent,accent);
+    vent(side*1.24,1.16,.075,.40,1.13);
+    g.box(side*1.24,1.21,1.74,.075,.52,.16,accent);
+    plate([[side*.63,1.48],[side*1.86,1.89],[side*1.88,2.20],[side*.65,1.85]],1.48,body);
+    g.box(side*.36,.37,2.06,.20,.07,.05,'#df3a4a');
+   }
+   fin(0,.61,.35,.65,body,.53);
+  }else if(i===11){
+   hull([[-3.30,.018,.13,.24],[-2.20,.24,.18,.45],[-.90,.41,.20,.62],[.40,.40,.20,.63],[1.90,.31,.20,.45],[2.30,.25,.19,.37]],body,body);
+   canopy(-.69,2.35,.65,.44,.53,'#101847','#164b9d');
+   pair(-1.90,1.18,true,.31,'#5b5569');pair(-1.10,1.18,true,.31,'#5b5569');pair(1.58,1.32,false,.46,'#5b5569');
+   // Split spear nose, silver leading edges and magenta piping.
+   for(const side of [-1,1]){
+    hull([[-3.34,.012,.12,.20,side*.18],[-2.67,.09,.15,.31,side*.22],[-1.85,.11,.20,.41,side*.27]],accent,accent);
+    plate([[side*.06,-2.81],[side*.34,-2.38],[side*.47,-1.89],[side*.15,-2.04]],.43,trim);
+    g.box(side*.25,.43,-2.51,.15,.09,.035,'#b6e738');
+    plate([[side*.36,-2.37],[side*1.72,-2.63],[side*1.54,-2.13],[side*.37,-1.96]],.23,accent);
+    // Long purple front wheel shrouds; high silver canards finish their tops.
+    hull([[-3.14,.012,.15,.22,side*1.71],[-2.51,.26,.21,.56,side*1.42],[-1.80,.37,.34,.78,side*1.18],[-.82,.30,.29,.64,side*1.17],[-.38,.08,.22,.42,side*1.12]],accent,accent);
+    hull([[-3.15,.01,.16,.23,side*1.70],[-2.74,.12,.22,.36,side*1.54],[-2.43,.15,.25,.45,side*1.45]],body,body);
+    vent(side*1.45,-2.30,.13,.45,.54);
+    plate([[side*.78,-1.19],[side*1.56,-1.65],[side*1.65,-1.48],[side*.93,-.94]],.82,body);
+    // Blade-shaped side skirts join a broad rear engine deck.
+    hull([[-.77,.035,.18,.25,side*.67],[.25,.27,.19,.57,side*.81],[1.72,.34,.22,.65,side*1.25],[2.27,.23,.23,.44,side*1.30]],accent,accent);
+    for(let n=0;n<2;n++)plate([[side*.49,-.48+n*.48],[side*1.13,-.24+n*.53],[side*1.07,.04+n*.53],[side*.54,-.13+n*.48]],.39,accent);
+    plate([[side*.31,.02],[side*1.50,.87],[side*1.72,1.87],[side*.39,1.13]],.73,body);
+    plate([[side*.35,.14],[side*1.48,.96],[side*1.63,1.86],[side*.45,1.15]],.749,trim);
+    // Four long purple intake housings end in four pink-rimmed gold nozzles.
+    for(const x of [.43,1.34]){
+     const y=x<1?.67:.73,z=x<1?2.48:2.31,r=x<1?.25:.29;
+     hull([[.48,.13,.60,.79,side*x],[1.08,r,.49,.98,side*x],[1.78,r,.42,.91,side*x],[z-.10,r*.90,.40,.84,side*x]],accent,accent);
+     g.box(side*x,.74,.45,r*1.25,.17,.035,'#101526');
+     ringZ(side*x,y,z,r,.27,trim,'#e6b62c','#bd3a92');
+    }
+    // Tall outer rear shoulders carry inward-swept independent wings.
+    hull([[1.14,.10,.55,.93,side*1.61],[1.80,.17,.43,1.20,side*1.60],[2.20,.12,.43,1.11,side*1.59]],accent,accent);
+    plate([[side*.58,1.65],[side*1.75,1.48],[side*1.80,1.81],[side*.61,1.96]],1.30,body);
+    g.box(side*1.59,1.09,1.77,.07,.34,.17,body);
+    g.box(side*1.41,.35,2.36,.18,.07,.04,'#e24b6b');
+   }
+  }
+
   for(const s of [-1,1]){g.box(s*.35,.32,2.00,.18,.08,.04,'#ff6f5d');}
   for(let n=0;n<36;n++){let a=n/36*TAU,b=(n+1)/36*TAU;shadow.tri([0,.025,0],[Math.sin(a)*(spec.width/2+.06),.025,Math.cos(a)*(spec.length/2+.05)],[Math.sin(b)*(spec.width/2+.06),.025,Math.cos(b)*(spec.length/2+.05)],'#101923');}shadow.layer=-1;
-  const wheelGeo=new Geometry().cylinderX(.34,.32,'#14202a');return {body:g,wheel:wheelGeo,shadow,wheels,spread:spec.width/2,length:spec.length,spec,exhaust:i===8?[[-1.14,.91,2.29],[1.14,.91,2.29]]:i===9?[[-.44,.59,2.44],[.44,.59,2.44],[-1.4,.54,2.29],[1.4,.54,2.29]]:[[-.35,.32,2.03],[.35,.32,2.03]]};
+  const wheelGeo=new Geometry().cylinderX(.34,.32,'#14202a');return {body:g,wheel:wheelGeo,shadow,wheels,spread:spec.width/2,length:spec.length,spec,exhaust:i===10?[[-1.24,.91,2.53],[1.24,.91,2.53]]:i===11?[[-.43,.67,2.63],[.43,.67,2.63],[-1.34,.73,2.46],[1.34,.73,2.46]]:i===8?[[-1.14,.91,2.29],[1.14,.91,2.29]]:i===9?[[-.44,.59,2.44],[.44,.59,2.44],[-1.4,.54,2.29],[1.4,.54,2.29]]:[[-.35,.32,2.03],[.35,.32,2.03]]};
  }
 
- const cars=Array.from({length:10},(_,i)=>carParts(i));let track=makeTrack(0),scene=null,renderer=null,preview=null,previewCanvas=null,cam=null;
+ const cars=Array.from({length:12},(_,i)=>carParts(i));let track=makeTrack(0),scene=null,renderer=null,preview=null,previewCanvas=null,cam=null;
  function offset(s,d,y=.03){return [s.p[0]+s.right[0]*d,y,s.p[2]+s.right[2]*d];}
  function scenery(t){const road=new Geometry(),ground=new Geometry(),structures=new Geometry(),sea=new Geometry(),props=new Geometry();
   if(t.index===1){sea.quad([-5000,-.35,-5000],[-5000,-.35,5000],[5000,-.35,5000],[5000,-.35,-5000],'#2386a3');ground.quad([-3000,-.12,-3000],[-3000,-.12,3000],[100,-.12,3000],[145,-.12,-3000],'#628b63');for(let n=0;n<160;n++){let x=180+(n%10)*48,z=-1600+Math.floor(n/10)*200;structures.box(x,-.28,z,24,.018,1.7,n%3?'#5ab5c5':'#a9e3e7');}}
-  else{ground.quad([-4000,-.15,-4000],[-4000,-.15,4000],[4000,-.15,4000],[4000,-.15,-4000],'#514e52');props.cone(230,-.12,30,150,175,'#584852',48,23);props.cone(230,166,30,25,3,'#f07137',36,12);for(let n=0;n<9;n++){let a=n/9*TAU,rx=Math.sin(a),rz=Math.cos(a);props.quad([230+rx*23,169,30+rz*23],[230+rx*30+rz*3,150,30+rz*30-rx*3],[230+rx*145+rz*7,0,30+rz*145-rx*7],[230+rx*140,0,30+rz*140],'#df6538');}for(let n=0;n<6;n++)props.cone(230+n*8,180+n*22,30,20+n*10,30,'#737381',12,24+n*9);}
+  else if(t.index===0){ground.quad([-4000,-.15,-4000],[-4000,-.15,4000],[4000,-.15,4000],[4000,-.15,-4000],'#514e52');props.cone(230,-.12,30,150,175,'#584852',48,23);props.cone(230,166,30,25,3,'#f07137',36,12);for(let n=0;n<9;n++){let a=n/9*TAU,rx=Math.sin(a),rz=Math.cos(a);props.quad([230+rx*23,169,30+rz*23],[230+rx*30+rz*3,150,30+rz*30-rx*3],[230+rx*145+rz*7,0,30+rz*145-rx*7],[230+rx*140,0,30+rz*140],'#df6538');}for(let n=0;n<6;n++)props.cone(230+n*8,180+n*22,30,20+n*10,30,'#737381',12,24+n*9);}
+  if(t.index===2){
+   ground.quad([-4000,-.15,-4000],[-4000,-.15,4000],[4000,-.15,4000],[4000,-.15,-4000],'#414d60');
+   // Buildings sit outside every part of the circuit; no scenery blocks the road.
+   for(let n=0;n<t.raw.length;n+=18)for(const side of [-1,1]){
+    const sm=t.sample(t.raw[n].dist),q=offset(sm,side*(30+(n%5)*5)),w=12+(n%4)*3,d=12+(n%3)*3,h=18+(n*13%53);
+    if(t.raw.some(pt=>Math.hypot(pt[0]-q[0],pt[2]-q[2])<Math.hypot(w,d)/2+HALF+5))continue;
+    const col=['#485d78','#536783','#29485f','#677184'][n%4];props.box(q[0],h/2,q[2],w,h,d,col,'#91a1b2');props.box(q[0],h+.55,q[2],w*.78,1.1,d*.75,'#26394c');
+    for(let row=0;row<5;row++)for(let coln=0;coln<3;coln++){
+     const x=q[0]-w*.30+coln*w*.30,y=3+row*(h-5)/5,c=(row+coln+n)%3?'#94d9e3':'#edc98b';
+     for(const face of [-1,1])props.quad([x-1,y,q[2]+face*(d/2+.025)],[x+1,y,q[2]+face*(d/2+.025)],[x+1,y+1.9,q[2]+face*(d/2+.025)],[x-1,y+1.9,q[2]+face*(d/2+.025)],c);
+    }
+   }
+   for(let n=0;n<t.raw.length;n+=25){const sm=t.sample(t.raw[n].dist);for(const side of [-1,1]){const q=offset(sm,side*11.7);props.box(q[0],3.8,q[2],.20,7.6,.20,'#bac8da');props.box(q[0],7.6,q[2],1.7,.20,.65,'#c7ecf1');}}
+   // Race gantry and bright geometric advertising, with no real-world branding.
+   for(const dist of [70,t.length*.48]){const sm=t.sample(dist);for(const side of [-1,1]){const q=offset(sm,side*10);structures.box(q[0],4.5,q[2],.5,9,.5,'#6e91a7');}
+    const a=offset(sm,-10,8.2),b=offset(sm,10,8.2);structures.quad(a,b,[b[0],10,b[2]],[a[0],10,a[2]],'#24a9bf');}
+  }
+  if(t.index===3){
+   ground.quad([-4000,-.15,-4000],[-4000,-.15,4000],[4000,-.15,4000],[4000,-.15,-4000],'#254a39');
+   // Broad umbrella crowns, buttress roots, palms and low ferns.
+   function tree(x,z,h,r,n){props.cone(x,0,z,.55,h,'#766145',7,.27);
+    if(n%4===0){for(let k=0;k<8;k++){const a=k/8*TAU,dx=Math.cos(a),dz=Math.sin(a),tx=-dz*.65,tz=dx*.65;props.quad([x,h,z],[x+dx*2+tx,h+.7,z+dz*2+tz],[x+dx*6,h-2,z+dz*6],[x+dx*2-tx,h+.7,z+dz*2-tz],k%2?'#469c60':'#287b4b');}}
+    else{const ns=9,nr=4;for(let k=0;k<nr;k++)for(let j=0;j<ns;j++){const point=(v,u)=>{const a=v/nr*Math.PI-Math.PI/2,b=u/ns*TAU;return [x+Math.cos(b)*Math.cos(a)*r*1.3,h-1+Math.sin(a)*2.6,z+Math.sin(b)*Math.cos(a)*r];};props.quad(point(k,j),point(k,j+1),point(k+1,j+1),point(k+1,j),['#237052','#36865c','#499164'][(j+n)%3]);}
+     props.box(x+r*.5,h-3.4,z,.10,5,.10,'#4c8855');}
+    for(let k=0;k<3;k++){const a=k/3*TAU;props.tri([x,2.3,z],[x+Math.cos(a)*1.8,0,z+Math.sin(a)*1.8],[x+.3,0,z],'#655a41');}
+   }
+   for(let n=0;n<t.raw.length;n+=10)for(const side of [-1,1]){
+    const sm=t.sample(t.raw[n].dist),q=offset(sm,side*(17+(n%5)*3));
+    if(t.raw.some(pt=>Math.hypot(pt[0]-q[0],pt[2]-q[2])<HALF+7))continue;
+    tree(q[0],q[2],10+n%11,4+n%3,n);
+    if(n%3===0){const back=offset(sm,side*(37+n%13));if(t.raw.every(pt=>Math.hypot(pt[0]-back[0],pt[2]-back[2])>HALF+8))tree(back[0],back[2],22+n%8,7,n+1);}
+    const fern=offset(sm,side*11.8);for(let k=0;k<5;k++){const a=k/5*TAU;props.tri([fern[0],1.8,fern[2]],[fern[0]+Math.cos(a)*2.5,.2,fern[2]+Math.sin(a)*2.5],[fern[0]+Math.cos(a+.3)*1.8,.7,fern[2]+Math.sin(a+.3)*1.8],'#59a75f');}
+   }
+   // A winding river remains beyond the eastern edge of the race course.
+   for(let n=0;n<55;n++){let z=-1100+n*35,x=760+Math.sin(n*.22)*55,nx=760+Math.sin((n+1)*.22)*55;sea.quad([x-23,-.07,z],[x+23,-.07,z],[nx+23,-.07,z+35],[nx-23,-.07,z+35],'#398b8c');}
+   for(let n=0;n<10;n++)props.cone(750+n*35,-.2,-650+n*110,50,65+n%4*12,'#366d50',9,15);
+  }
   for(let i=0;i<t.raw.length-1;i++){let a=t.sample(t.raw[i].dist),b=t.sample(t.raw[i+1].dist-.001);let stripe=Math.floor(t.raw[i].dist/6)%2;road.quad(offset(a,-HALF),offset(b,-HALF),offset(b,HALF),offset(a,HALF),i%2?'#343c49':'#353d49');for(const side of [-1,1]){road.quad(offset(a,side*HALF),offset(b,side*HALF),offset(b,side*(HALF+.65)),offset(a,side*(HALF+.65)),stripe?'#f5ddd1':'#d94b44');if(i%3===0){let pa=offset(a,side*(HALF+.86),.67),pb=offset(b,side*(HALF+.86),.67);const p2=t.sample(t.raw[Math.min(i+3,t.raw.length-1)].dist-.001);pb=offset(p2,side*(HALF+.86),.67);structures.quad(pa,pb,[pb[0],.88,pb[2]],[pa[0],.88,pa[2]],t.index===1?'#d3e4e6':'#a4a7b1');}if(i%9===0){let p=offset(a,side*(HALF+.90),.46);structures.box(p[0],p[1],p[2],.13,.94,.13,'#c8d8dd');}}
    if(Math.floor(t.raw[i].dist/11)%2===0)for(const line of [-1/3,1/3])road.quad(offset(a,HALF*line-.05,.045),offset(b,HALF*line-.05,.045),offset(b,HALF*line+.05,.045),offset(a,HALF*line+.05,.045),'#d5e4e9');
 
@@ -172,25 +280,28 @@ const Racing3D=(()=>{
   const s=t.sample(0),e=t.sample(3);for(let k=0;k<12;k++)road.quad(offset(s,-HALF+k*HALF/6,.055),offset(e,-HALF+k*HALF/6,.055),offset(e,-HALF+(k+1)*HALF/6,.055),offset(s,-HALF+(k+1)*HALF/6,.055),k%2?'#ffffff':'#15202d');
   for(let i=0;i<t.raw.length;i+=22){let s=t.sample(t.raw[i].dist),side=i%2?1:-1,p=offset(s,side*(HALF+20+(i%9)*2),-.1);if(t.index===1&&p[0]<100){props.cone(p[0],0,p[2],2.9,9.5,'#3e775d',8);props.box(p[0],1,p[2],.55,3,.55,'#776e5b');}else if(t.index===0){props.cone(p[0],0,p[2],4+(i%5),4+(i%4),'#6c6263',7);}}
   if(t.index===1)for(let n=0;n<26;n++){const x=130+Math.sin(n*.7)*18,z=-950+n*75;if(t.raw.every(p=>Math.hypot(p[0]-x,p[2]-z)>34))props.cone(x,-8,z,16,17,'#9f9a81',7,8);}
-  sea.layer=-4;ground.layer=-3;road.layer=-2;return {road,ground,structures,sea,props};
+  sea.layer=t.index===3?-3:-4;ground.layer=t.index===3?-4:-3;road.layer=-2;return {road,ground,structures,sea,props};
  }
  // Remove a broad checker pattern: asphalt stays continuous between timing lines.
  function buildScene(){scene=scenery(track);}
  function init(canvas){renderer=new GLView(canvas);buildScene();return track;}
  function choose(index){track=makeTrack(index);cam=null;if(renderer){if(scene)for(const geo of Object.values(scene))renderer.disposeGeometry(geo);buildScene();}return track;}
- function drawVehicle(view,i,p,heading,steer=0,spin=0,roll=0,boost=false,brake=false){const car=cars[i];view.draw(car.shadow,model(p[0],p[1]+.055,p[2],heading));view.draw(car.body,model(p[0],p[1],p[2],heading,roll));const c=Math.cos(heading),s=Math.sin(heading);for(const wh of car.wheels){let wx=p[0]+c*wh.x+s*wh.z,wz=p[2]-s*wh.x+c*wh.z;let m=model(wx,p[1]+(wh.radius||.32),wz,heading+(wh.front?steer:0)); // Wheel spokes rotate around their real axle.
+ function drawVehicle(view,i,p,heading,steer=0,spin=0,roll=0,boost=false,brake=false,spiral=false,time=0){const car=cars[i];view.draw(car.shadow,model(p[0],p[1]+.055,p[2],heading));view.draw(car.body,model(p[0],p[1],p[2],heading,roll));const c=Math.cos(heading),s=Math.sin(heading);for(const wh of car.wheels){let wx=p[0]+c*wh.x+s*wh.z,wz=p[2]-s*wh.x+c*wh.z;let m=model(wx,p[1]+(wh.radius||.32),wz,heading+(wh.front?steer:0)); // Wheel spokes rotate around their real axle.
     let cr=Math.cos(spin),sr=Math.sin(spin);const r=new Float32Array(m);for(let j=0;j<4;j++){r[4+j]=m[4+j]*cr+m[8+j]*sr;r[8+j]=-m[4+j]*sr+m[8+j]*cr;}view.draw(wh.geo||car.wheel,r);}
-   if(boost){if(!drawVehicle.flame)drawVehicle.flame=new Geometry().cone(0,0,0,.18,1.6,'#70f8ff',7);const flame=drawVehicle.flame;for(const local of car.exhaust){let x=p[0]+c*local[0]+s*local[2],z=p[2]-s*local[0]+c*local[2];let m=model(x,p[1]+local[1],z,heading); // tip follows exhaust direction along local +Z
-      m[4]=s;m[5]=0;m[6]=c;m[8]=0;m[9]=-1;m[10]=0;view.draw(flame,m);}}
+   if(boost||spiral){if(!drawVehicle.flame)drawVehicle.flame=new Geometry().cone(0,0,0,.18,1.6,'#70f8ff',7);if(!drawVehicle.spiralFlame)drawVehicle.spiralFlame=new Geometry().cone(0,0,0,.23,2.65,'#ffd46a',9);const flame=spiral?drawVehicle.spiralFlame:drawVehicle.flame;for(const local of car.exhaust){let x=p[0]+c*local[0]+s*local[2],z=p[2]-s*local[0]+c*local[2];let m=model(x,p[1]+local[1],z,heading); // tip follows exhaust direction along local +Z
+      m[4]=s;m[5]=0;m[6]=c;m[8]=0;m[9]=-1;m[10]=0;view.draw(flame,m);
+      if(spiral){if(!drawVehicle.helix){const geo=new Geometry();for(let k=0;k<52;k++){const a=k/52*TAU*2.5,b=(k+1)/52*TAU*2.5,z0=k/52*2.7,z1=(k+1)/52*2.7;for(const sign of [-1,1])geo.quad([Math.cos(a)*.25*sign,Math.sin(a)*.25*sign,z0],[Math.cos(b)*.25*sign,Math.sin(b)*.25*sign,z1],[Math.cos(b)*.34*sign,Math.sin(b)*.34*sign,z1],[Math.cos(a)*.34*sign,Math.sin(a)*.34*sign,z0],sign===1?'#ff81ca':'#ffe4aa');}drawVehicle.helix=geo;}
+       const h=model(x,p[1]+local[1],z,heading),angle=time*18,cr=Math.cos(angle),sr=Math.sin(angle),hm=new Float32Array(h);for(let j=0;j<4;j++){hm[j]=h[j]*cr+h[4+j]*sr;hm[4+j]=-h[j]*sr+h[4+j]*cr;}view.draw(drawVehicle.helix,hm);}
+     }}
  }
  const waterPatch=new Geometry().box(0,.055,0,16,.035,70,'#5b9caa'),foamCube=new Geometry().box(0,0,0,2,.3,1.2,'#d2f5f7'),waveMesh=new Geometry();for(let k=0;k<20;k++){let z=(k-10)*3;waveMesh.quad([0,-.3,z],[0,-.3,z+3],[-1.4,2.4,z+3],[-1.4,2.4,z],'#73c2d1');waveMesh.quad([-1.4,2.4,z],[-1.4,2.4,z+3],[-2.1,2.3,z+3],[-2.1,2.3,z],'#e2fcfb');}
  function render(g,selected,dt){if(!renderer)return;const s=track.sample(g.dist),right=s.right,p=V.add(s.p,V.mul(right,g.x*(HALF-1.1))),heading=s.heading-g.yaw;
-  const behind=V.sub(p,V.mul(s.t,8.9)),eye=[behind[0],p[1]+2.30+(g.boost>0?.15:0),behind[2]],ahead=track.sample(g.dist+24),look=[ahead.p[0]+right[0]*g.x*5,.65,ahead.p[2]+right[2]*g.x*5];
-  const desiredLook=V.sub(look,p);if(!cam)cam={eye:[...eye],look:[...look],direction:[...s.t],lookDirection:[...desiredLook]};const k=1-Math.exp(-dt*10);for(let i=0;i<3;i++){cam.direction[i]+=(s.t[i]-cam.direction[i])*k;cam.lookDirection[i]+=(desiredLook[i]-cam.lookDirection[i])*k;}const direction=V.norm(cam.direction);cam.eye=[p[0]-direction[0]*8.9,p[1]+2.30+(g.boost>0?.15:0),p[2]-direction[2]*8.9];cam.look=V.add(p,cam.lookDirection);const shake=g.collide>0?Math.sin(g.elapsed*70)*.06:0;cam.eye[1]+=shake;
-  const sky=track.index===1?[.44,.72,.83]:[.52,.57,.67];renderer.begin(cam.eye,cam.look,(g.boost>0?1.07:.94),sky,track.index===1?1200:1500);
+  const behind=V.sub(p,V.mul(s.t,8.9)),eye=[behind[0],p[1]+2.30+(g.spiral>0?.25:g.boost>0?.15:0),behind[2]],ahead=track.sample(g.dist+24),look=[ahead.p[0]+right[0]*g.x*5,.65,ahead.p[2]+right[2]*g.x*5];
+  const desiredLook=V.sub(look,p);if(!cam)cam={eye:[...eye],look:[...look],direction:[...s.t],lookDirection:[...desiredLook]};const k=1-Math.exp(-dt*10);for(let i=0;i<3;i++){cam.direction[i]+=(s.t[i]-cam.direction[i])*k;cam.lookDirection[i]+=(desiredLook[i]-cam.lookDirection[i])*k;}const direction=V.norm(cam.direction);cam.eye=[p[0]-direction[0]*8.9,p[1]+2.30+(g.spiral>0?.25:g.boost>0?.15:0),p[2]-direction[2]*8.9];cam.look=V.add(p,cam.lookDirection);const shake=g.collide>0?Math.sin(g.elapsed*70)*.06:0;cam.eye[1]+=shake;
+  const sky=[[.52,.57,.67],[.44,.72,.83],[.42,.57,.72],[.36,.56,.47]][track.index];renderer.begin(cam.eye,cam.look,(g.spiral>0?1.14:g.boost>0?1.07:.94),sky,track.index===3?750:track.index===1?1200:1500);
   renderer.draw(scene.sea);renderer.draw(scene.ground);renderer.draw(scene.props);renderer.draw(scene.road);renderer.draw(scene.structures);
   if(g.wave){let ws=track.sample(g.wave.dist),wp=ws.p,age=g.elapsed-g.wave.at;renderer.draw(waterPatch,model(wp[0],0,wp[2],ws.heading));if(age>=4&&age<10){const d=14-(age-4)*4.4,pp=V.add(wp,V.mul(ws.right,d));renderer.draw(waveMesh,model(pp[0],0,pp[2],ws.heading));for(let k=0;k<17;k++){const off=(k-8)*3;let p2=V.add(pp,V.mul(ws.t,off));renderer.draw(foamCube,model(p2[0],2.3+Math.sin(g.elapsed*8+k)*.16,p2[2],ws.heading));}}}
-  const all=g.ai.map(a=>({...a,player:false}));all.push({i:selected,dist:g.dist,lane:g.x,player:true});for(const a of all){if(!a.player&&a.finish!==null)continue;const ss=track.sample(a.dist);if(!a.player&&V.dot(V.sub(ss.p,p),s.t)<-4)continue;const pos=V.add(ss.p,V.mul(ss.right,(a.player?g.x:a.lane)*(HALF-1.1)));if(Math.hypot(pos[0]-p[0],pos[2]-p[2])>550)continue;drawVehicle(renderer,a.i,pos,ss.heading-(a.player?g.yaw:(a.vx||0)*.035),a.player?-g.steer*.34:(a.vx||0)*.05,(a.player?g.dist:a.dist)/.32,a.player?-g.steer*Math.min(.045,g.speed*.0001):0,a.player?g.boost>0:a.boost>0,a.player?g.braking:a.braking);}
+  const all=g.ai.map(a=>({...a,player:false}));all.push({i:selected,dist:g.dist,lane:g.x,player:true});for(const a of all){if(!a.player&&a.finish!==null)continue;const ss=track.sample(a.dist);if(!a.player&&V.dot(V.sub(ss.p,p),s.t)<-4)continue;const pos=V.add(ss.p,V.mul(ss.right,(a.player?g.x:a.lane)*(HALF-1.1)));if(Math.hypot(pos[0]-p[0],pos[2]-p[2])>550)continue;drawVehicle(renderer,a.i,pos,ss.heading-(a.player?g.yaw:(a.vx||0)*.035),a.player?-g.steer*.34:(a.vx||0)*.05,(a.player?g.dist:a.dist)/.32,a.player?-g.steer*Math.min(.045,g.speed*.0001):0,a.player?g.boost>0:a.boost>0,a.player?g.braking:a.braking,a.player?g.spiral>0:a.spiral>0,g.elapsed);}
   renderer.finish();
  }
  function previewTo(canvas,i,angle=.72,zoom=1){if(!preview){previewCanvas=document.createElement('canvas');preview=new GLView(previewCanvas,true);}const r=canvas.getBoundingClientRect(),w=Math.max(64,Math.round(r.width||640)),h=Math.max(64,Math.round(r.height||360));canvas.width=w*Math.min(devicePixelRatio||1,1.5);canvas.height=h*Math.min(devicePixelRatio||1,1.5);previewCanvas.width=canvas.width;previewCanvas.height=canvas.height;const radius=7.8*Math.max(1,cars[i].length/5.65)/zoom,eye=[Math.sin(angle)*radius,2.65/zoom,-Math.cos(angle)*radius];preview.begin(eye,[0,.46,-.18],.62,[.037,.064,.10],70);if(!previewTo.stage){previewTo.stage=new Geometry().box(0,-.12,0,13,.2,12,'#16283a','#233449');previewTo.pad=new Geometry().cone(0,-.01,0,3.6,.025,'#34485d',64,3.6);}previewTo.stage.layer=-3;previewTo.pad.layer=-2;preview.draw(previewTo.stage);preview.draw(previewTo.pad);drawVehicle(preview,i,[0,.025,0],0,0,0,0,false);preview.finish();const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.drawImage(previewCanvas,0,0);}
